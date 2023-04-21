@@ -1,7 +1,7 @@
 # DevJWT
 DevJWT Test Project
 
-### Architecture of Blog Project
+### Architecture of JWT Project
 <img src="./image/Architecture.png" width="1000"></img>
 
 ###### java version 확인
