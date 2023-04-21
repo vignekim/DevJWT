@@ -1,0 +1,13 @@
+services:
+  boot:
+    container_name: boot
+    image: gradle:jdk19
+    restart: always
+    ports:
+      - 8080:8080
+    volumes:
+      - ../boot:/workspace
+    environment:
+      - TZ=Asia/Seoul
+      - LC_ALL:en_US.UTF-8
+    command: sleep infinity
