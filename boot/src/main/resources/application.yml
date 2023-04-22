@@ -1,0 +1,14 @@
+server:
+  port: 8080
+spring:
+  profiles:
+    active: dev
+access:
+  keys:
+    public: access-keys/access-public.key
+    private: access-keys/access-private.key
+    instance: RSA
+  auth:
+    jwt: c2hlbGxmb2xkZXIxMjM0NTY3ODlEZXZKV1QxMjM0NTY3ODk=
+    header: Authorization
+    type: bearer

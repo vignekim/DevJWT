@@ -25,6 +25,11 @@ main {
 h1, h2, hr, p {
   margin: 10px 0;
 }
+textarea {
+  width: 100%;
+  resize: none;
+  font-size: 1.2rem;
+}
 form {
   display: flex;
   flex-direction: column;
