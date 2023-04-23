@@ -96,8 +96,8 @@ SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256); //or HS384 or HS512
 ```
 
 
-
 ----
 ### YouTube Link
 
-> * [1. Token 설명](https://youtu.be/lnnCijQuTnQ)
+> * [1. Token 소개](https://youtu.be/lnnCijQuTnQ)
+> * [2. Token 구조 및 흐름](https://youtu.be/i5rp3mvFvLA)

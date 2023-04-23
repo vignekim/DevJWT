@@ -26,7 +26,6 @@ export default {
         .then((res) => {
           if(res.data.state) {
             this.auth.token = res.data.token
-            this.key = ''
             this.view = 2
           }
         })
@@ -34,7 +33,7 @@ export default {
     },
     verification() {
       if(this.auth.token == '') return
-      const params = {token: this.auth.token};
+      const params = {token: this.auth.token, key: this.key};
       axios.post('/verification', params)
         .then((res) => {
           if(res.data.state) {
@@ -53,6 +52,7 @@ export default {
         header: {algorithm: '',type: ''},
         payload: {name: ''}
       }
+      this.key = ''
       this.view = 1
     }
   },
