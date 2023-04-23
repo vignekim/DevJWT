@@ -56,9 +56,6 @@ public class TokenGenerator {
   public Map<String, Object> setJwtToken(String name) {
     Map<String, Object> resultMap = new HashMap<>();
 
-    Calendar date = Calendar.getInstance();
-    date.add(Calendar.MINUTE, 5);
-
     String base64 = Base64.getEncoder().encodeToString(name.getBytes());
     Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64));
 
@@ -66,7 +63,7 @@ public class TokenGenerator {
       .setIssuer("DevJWT")
       .setSubject("1")
       .setAudience(name)
-      .setExpiration(date.getTime())
+      .setExpiration(Calendar.getInstance().getTime())
       .setIssuedAt(Calendar.getInstance().getTime())
       .signWith(key, signatureAlgorithm);
 
@@ -80,29 +77,12 @@ public class TokenGenerator {
   public Map<String, Object> getJwtInfo(Map<String, Object> paramMap) {
     Map<String, Object> resultMap = new HashMap<>();
     Map<String, String> headerMap = new HashMap<>();
-/*
+
     Iterator<String> keys = paramMap.keySet().iterator();
     while (keys.hasNext()) {
       String key = keys.next();
       log.info("{} : {}", key, paramMap.get(key));
     }
-*/
-    String header = paramMap.get("token").toString();
-    String token = header.split(" ")[1];
-
-    String sKey = paramMap.get("key").toString();
-    String base64 = Base64.getEncoder().encodeToString(sKey.getBytes());
-    Key keys = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64));
-
-    Claims claims = Jwts.parserBuilder()
-      .setSigningKey(keys).build()
-      .parseClaimsJws(token).getBody();
-
-    log.info("Issuer : {}", claims.getIssuer());
-    log.info("Subject : {}", claims.getSubject());
-    log.info("Audience : {}", claims.getAudience());
-    log.info("Expiration : {}", claims.getExpiration());
-    log.info("IssuedAt : {}", claims.getIssuedAt());
 
     headerMap.put("type", tokenType);
     headerMap.put("algorithm", algorithm);
