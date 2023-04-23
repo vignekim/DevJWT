@@ -1,6 +1,7 @@
 package com.folder.boot.security;
 
 import java.security.Key;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -26,6 +27,10 @@ import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.Encoder;
+import io.jsonwebtoken.io.Encoders;
+import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,7 +55,24 @@ public class TokenGenerator {
 
   public Map<String, Object> setJwtToken(String name) {
     Map<String, Object> resultMap = new HashMap<>();
-    resultMap.put("token", AUTH_TYPE.concat(" ").concat(name));
+
+    Calendar date = Calendar.getInstance();
+    date.add(Calendar.MINUTE, 5);
+
+    String base64 = Base64.getEncoder().encodeToString(name.getBytes());
+    Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64));
+
+    JwtBuilder builder = Jwts.builder()
+      .setIssuer("DevJWT")
+      .setSubject("1")
+      .setAudience(name)
+      .setExpiration(date.getTime())
+      .setIssuedAt(Calendar.getInstance().getTime())
+      .signWith(key, signatureAlgorithm);
+
+    String token = builder.compact();
+    resultMap.put("token", AUTH_TYPE.concat(" ").concat(token));
+//  resultMap.put("token", AUTH_TYPE.concat(" ").concat(name));
     resultMap.put("state", true);
     return resultMap;
   }
@@ -58,12 +80,29 @@ public class TokenGenerator {
   public Map<String, Object> getJwtInfo(Map<String, Object> paramMap) {
     Map<String, Object> resultMap = new HashMap<>();
     Map<String, String> headerMap = new HashMap<>();
-
+/*
     Iterator<String> keys = paramMap.keySet().iterator();
     while (keys.hasNext()) {
       String key = keys.next();
       log.info("{} : {}", key, paramMap.get(key));
     }
+*/
+    String header = paramMap.get("token").toString();
+    String token = header.split(" ")[1];
+
+    String sKey = paramMap.get("key").toString();
+    String base64 = Base64.getEncoder().encodeToString(sKey.getBytes());
+    Key keys = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64));
+
+    Claims claims = Jwts.parserBuilder()
+      .setSigningKey(keys).build()
+      .parseClaimsJws(token).getBody();
+
+    log.info("Issuer : {}", claims.getIssuer());
+    log.info("Subject : {}", claims.getSubject());
+    log.info("Audience : {}", claims.getAudience());
+    log.info("Expiration : {}", claims.getExpiration());
+    log.info("IssuedAt : {}", claims.getIssuedAt());
 
     headerMap.put("type", tokenType);
     headerMap.put("algorithm", algorithm);

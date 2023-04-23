@@ -2,7 +2,7 @@
 DevJWT Test Project
 
 ### Architecture of JWT Project
-<img src="./image/Architecture.png" width="1000"></img>
+<img src="./image/DevJWT.gif" width="1000"></img>
 
 ###### java version 확인
 
@@ -101,3 +101,4 @@ SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256); //or HS384 or HS512
 
 > * [1. Token 소개](https://youtu.be/lnnCijQuTnQ)
 > * [2. Token 구조 및 흐름](https://youtu.be/i5rp3mvFvLA)
+> * [3. Token 생성 및 테스트](https://youtu.be/Nn9aXiyOnwk)
