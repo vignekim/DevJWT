@@ -59,11 +59,14 @@ public class TokenGenerator {
     String base64 = Base64.getEncoder().encodeToString(name.getBytes());
     Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64));
 
+    Calendar date = Calendar.getInstance();
+    date.add(Calendar.MINUTE, 3);
+
     JwtBuilder builder = Jwts.builder()
       .setIssuer("DevJWT")
       .setSubject("1")
       .setAudience(name)
-      .setExpiration(Calendar.getInstance().getTime())
+      .setExpiration(date.getTime())
       .setIssuedAt(Calendar.getInstance().getTime())
       .signWith(key, signatureAlgorithm);
 
@@ -77,19 +80,41 @@ public class TokenGenerator {
   public Map<String, Object> getJwtInfo(Map<String, Object> paramMap) {
     Map<String, Object> resultMap = new HashMap<>();
     Map<String, String> headerMap = new HashMap<>();
-
+/*
     Iterator<String> keys = paramMap.keySet().iterator();
     while (keys.hasNext()) {
       String key = keys.next();
       log.info("{} : {}", key, paramMap.get(key));
     }
+*/
+    String header = paramMap.get("token").toString();
+    log.info("header : {}", header);
+    String token = header.split(" ")[1];
+    log.info("token : {}", token);
+
+    String name = paramMap.get("key").toString();
+
+    String base64 = Base64.getEncoder().encodeToString(name.getBytes());
+    Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64));
+
+    Claims claims = Jwts.parserBuilder()
+      .setSigningKey(key).build()
+      .parseClaimsJws(token).getBody();
+
+    log.info("Issuer : {}", claims.getIssuer());
+    log.info("Subject : {}", claims.getSubject());
+    log.info("Audience : {}", claims.getAudience());
+    log.info("Expiration : {}", claims.getExpiration());
+    log.info("IssuedAt : {}", claims.getIssuedAt());
+
+    int no = Integer.parseInt(claims.getSubject());
 
     headerMap.put("type", tokenType);
     headerMap.put("algorithm", algorithm);
 
     resultMap.put("state", true);
     resultMap.put("header", headerMap);
-    resultMap.put("payload", User.builder().no(1).name("폴더").build());
+    resultMap.put("payload", User.builder().no(no).name(claims.getIssuer()).build());
 
     return resultMap;
   }
