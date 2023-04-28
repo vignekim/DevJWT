@@ -5,7 +5,6 @@ import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -19,17 +18,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.folder.boot.dto.ClaimsDTO;
+import com.folder.boot.dto.HeaderDTO;
+import com.folder.boot.dto.ResultDTO;
 import com.folder.boot.dto.User;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.io.Encoder;
-import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,7 @@ public class TokenGenerator {
   private String jwtSecretKey;
 
   @Autowired ObjectMapper objectMapper;
+  @Autowired KeyUtils keyUtils;
 
   private String tokenType = "JWT";
   private String algorithm = "HS256";
@@ -56,72 +58,38 @@ public class TokenGenerator {
   public Map<String, Object> setJwtToken(String name) {
     Map<String, Object> resultMap = new HashMap<>();
 
-    String base64 = Base64.getEncoder().encodeToString(name.getBytes());
-    Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64));
-
-    Calendar date = Calendar.getInstance();
-    date.add(Calendar.MINUTE, 3);
+    User user = User.builder().no(1).name(name).build();
 
     JwtBuilder builder = Jwts.builder()
-      .setIssuer("DevJWT")
-      .setSubject("1")
-      .setAudience(name)
-      .setExpiration(date.getTime())
-      .setIssuedAt(Calendar.getInstance().getTime())
-      .signWith(key, signatureAlgorithm);
+      .setHeader(createHeader())
+      .setClaims(createClaims(user))
+      .signWith(createSignature(), signatureAlgorithm);
 
     String token = builder.compact();
     resultMap.put("token", AUTH_TYPE.concat(" ").concat(token));
-//  resultMap.put("token", AUTH_TYPE.concat(" ").concat(name));
     resultMap.put("state", true);
     return resultMap;
   }
 
-  public Map<String, Object> getJwtInfo(Map<String, Object> paramMap) {
+  public Map<String, Object> getJwtInfo(HttpServletRequest request) {
     Map<String, Object> resultMap = new HashMap<>();
-    Map<String, String> headerMap = new HashMap<>();
-/*
-    Iterator<String> keys = paramMap.keySet().iterator();
-    while (keys.hasNext()) {
-      String key = keys.next();
-      log.info("{} : {}", key, paramMap.get(key));
+
+    if(isValidToken(request)) {
+      String token = getTokenFromHeader(request);
+
+      resultMap.put("state", true);
+      resultMap.put("header", getHeaderFromToken(token));
+      resultMap.put("payload", getUserFromToken(token));
+    } else {
+      resultMap.put("state", false);
     }
-*/
-    String header = paramMap.get("token").toString();
-    log.info("header : {}", header);
-    String token = header.split(" ")[1];
-    log.info("token : {}", token);
-
-    String name = paramMap.get("key").toString();
-
-    String base64 = Base64.getEncoder().encodeToString(name.getBytes());
-    Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64));
-
-    Claims claims = Jwts.parserBuilder()
-      .setSigningKey(key).build()
-      .parseClaimsJws(token).getBody();
-
-    log.info("Issuer : {}", claims.getIssuer());
-    log.info("Subject : {}", claims.getSubject());
-    log.info("Audience : {}", claims.getAudience());
-    log.info("Expiration : {}", claims.getExpiration());
-    log.info("IssuedAt : {}", claims.getIssuedAt());
-
-    int no = Integer.parseInt(claims.getSubject());
-
-    headerMap.put("type", tokenType);
-    headerMap.put("algorithm", algorithm);
-
-    resultMap.put("state", true);
-    resultMap.put("header", headerMap);
-    resultMap.put("payload", User.builder().no(no).name(claims.getIssuer()).build());
 
     return resultMap;
   }
 
-  public boolean isValidToken(String token) {
+  public boolean isValidToken(HttpServletRequest request) {
     try {
-      Claims claims = getClaimsFormToken(getTokenFromHeader(token));
+      Claims claims = getClaimsFormToken(getTokenFromHeader(request));
       log.info("============================================");
       log.info("|expireTime\t: {}|", claims.getExpiration());
       log.info("|realTime\t: {}|", Calendar.getInstance().getTime());
@@ -160,35 +128,63 @@ public class TokenGenerator {
   }
 
   private Date createExpiredDate() {
-    return null;
+    Calendar date = Calendar.getInstance();
+    date.add(Calendar.MINUTE, 3);
+    return date.getTime();
   }
 
   private Map<String, Object> createHeader() {
+    Map<String, Object> header = new HashMap<String, Object>();
+    header.put("typ", tokenType);
+    header.put("alg", algorithm);
+    return header;
+  }
+
+  private Claims createClaims(User user) {
+    return Jwts.claims()
+      .setIssuer("DevJWT")
+      .setSubject("User")
+      .setAudience(keyUtils.encodeContent(setContent(user)))
+      .setExpiration(createExpiredDate())
+      .setIssuedAt(Calendar.getInstance().getTime());
+  }
+
+  private Key createSignature() {
+    byte[] jwtKeySecretBytes = DatatypeConverter.parseBase64Binary(jwtSecretKey);
+    return new SecretKeySpec(jwtKeySecretBytes, signatureAlgorithm.getJcaName());
+  }
+
+  private String getTokenFromHeader(HttpServletRequest request) {
+    String header = request.getHeader(AUTH_HEADER);
+    log.info("header : {}", header);
+    String[] strArray = header.split(" ");
+    if(AUTH_TYPE.equals(strArray[0])) {
+      String token = strArray[1];
+      log.info("token : {}", token);
+      return token;
+    }
     return null;
   }
 
-  private Map<String, Object> createClaims(User user) {
-    return null;
-  }
-
-  private Key createSignature(SignatureAlgorithm signatureAlgorithm) {
-    return null;
-  }
-
-  private String getTokenFromHeader(String header) {
-    return header.split(" ")[1];
+  private HeaderDTO getHeaderFromToken(String token) {
+    JwsHeader<?> jwsHeader = Jwts.parserBuilder()
+      .setSigningKey(createSignature()).build()
+      .parseClaimsJws(token).getHeader();
+    return HeaderDTO.builder()
+      .type(jwsHeader.getType())
+      .algorithm(jwsHeader.getAlgorithm())
+      .build();
   }
 
   private Claims getClaimsFormToken(String token) {
-    return null;
+    return Jwts.parserBuilder()
+    .setSigningKey(createSignature()).build()
+    .parseClaimsJws(token).getBody();
   }
 
   private User getUserFromToken(String token) {
-    return null;
-  }
-
-  private ClaimsDTO parseTokenToUserInfo(String token) {
-    return null;
+    Claims claims = getClaimsFormToken(token);
+    return getContent(keyUtils.decodeContent(claims.getAudience()));
   }
 
 }

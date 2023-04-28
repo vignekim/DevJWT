@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.folder.boot.security.TokenGenerator;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
 public class TokenController {
 
@@ -22,8 +24,8 @@ public class TokenController {
   }
 
   @PostMapping("/verification")
-  public Map<String, Object> verification(@RequestBody Map<String, Object> paramMap) {
-    return tokenGenerator.getJwtInfo(paramMap);
+  public Map<String, Object> verification(HttpServletRequest request) {
+    return tokenGenerator.getJwtInfo(request);
   }
 
 }

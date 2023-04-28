@@ -33,9 +33,27 @@ export default {
     },
     verification() {
       if(this.auth.token == '') return
-      const params = {token: this.auth.token, key: this.key};
-      axios.post('/verification', params)
+      //const params = {token: this.auth.token, key: this.key};
+
+      const setInterceptors = (instance, token) => {
+        instance.interceptors.request.use(
+          (config) => {
+            config.headers.Authorization = token
+            return config;
+          },
+          (error) => {return Promise.reject(error)}
+        )
+        return instance
+      }
+
+      const useAxios = (token) => {
+        const instance = axios.create({baseURL: ''})
+        return setInterceptors(instance, token)
+      }
+
+      useAxios(this.auth.token).post('/verification')
         .then((res) => {
+          console.log(res)
           if(res.data.state) {
             this.auth.header = res.data.header
             this.auth.payload = res.data.payload

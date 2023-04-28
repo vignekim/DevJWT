@@ -104,3 +104,5 @@ SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256); //or HS384 or HS512
 > * [3. Token 생성 및 테스트](https://youtu.be/Nn9aXiyOnwk)
 > * [4. Token 검증 및 테스트](https://youtu.be/W4xQVo82hhE)
 > * [5. RSA 비대칭키 소개](https://youtu.be/fNWFtAFpiuI)
+> * [6. RSA 적용하기](https://youtu.be/R29cAazcKqA)
+> * [7. 코드 정리 및 마무리](https://youtu.be/wAcYFsyddrg)

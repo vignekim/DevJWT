@@ -55,7 +55,7 @@ public class KeyUtils {
       return setAccessKeyPair(publicKeyPath, privateKeyPath);
     }
     log.info("===============================================================================================");
-    log.info("|대상 키 주소: 공개키 - {}, 개인키 - {}|", publicKeyFile, privateKeyFile);
+    log.info("|대상 키 주소: 공개키 - {}, 개인키 - {}|", publicKeyPath, privateKeyPath);
     log.info("===============================================================================================");
     try {
       KeyFactory keyFactory = KeyFactory.getInstance(KEYS_INSTANCE);
@@ -76,14 +76,12 @@ public class KeyUtils {
   }
 
   private KeyPair setAccessKeyPair(String publicKeyPath, String privateKeyPath) {
-    File publicKeyFile = new File(publicKeyPath);
-    File privateKeyFile = new File(privateKeyPath);
     File directory = new File("access-keys");
     if (!directory.exists()) {
         directory.mkdirs();
     }
     log.info("===============================================================================================");
-    log.info("|신규 키 주소: 공개키 - {}, 개인키 - {}|", publicKeyFile, privateKeyFile);
+    log.info("|신규 키 주소: 공개키 - {}, 개인키 - {}|", publicKeyPath, privateKeyPath);
     log.info("===============================================================================================");
     try {
       SecureRandom secureRandom = new SecureRandom();
